@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#111827">
+<title>Spider Coach</title>
+<style>
+*{box-sizing:border-box} body{margin:0;background:#0b1020;color:#f8fafc;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.app{max-width:720px;margin:auto;padding:18px 16px 40px}.top{display:flex;justify-content:space-between;align-items:center}
+h1{font-size:28px;margin:0}.sub{color:#94a3b8;font-size:13px}.card{background:#151d31;border:1px solid #26324d;border-radius:18px;padding:16px;margin:14px 0;box-shadow:0 8px 25px #0002}
+.date{font-size:14px;color:#94a3b8}.big{font-size:24px;font-weight:800;margin:5px 0 0}
+.tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:14px 0}.tabs button,.nav button,.save{border:0;border-radius:12px;padding:11px;background:#25304a;color:#fff;font-weight:700}
+.tabs button.active{background:#e11d48}.row{display:flex;gap:8px;align-items:center;margin:9px 0}.row input[type=checkbox]{width:21px;height:21px;accent-color:#e11d48}
+h2{font-size:18px;margin:0 0 10px} h3{font-size:15px;margin:15px 0 7px}.muted{color:#aab5ca}
+.meal{display:flex;justify-content:space-between;gap:12px;border-top:1px solid #26324d;padding:10px 0}.meal:first-of-type{border-top:0}
+.qty{color:#fda4af;font-weight:700;text-align:right}.exercise{padding:10px 0;border-top:1px solid #26324d}.exercise:first-of-type{border-top:0}
+.badge{display:inline-block;padding:5px 8px;border-radius:999px;background:#26304a;color:#cbd5e1;font-size:12px}.hero{background:linear-gradient(135deg,#e11d48,#7c3aed);border:0}
+.progressbar{height:10px;background:#27324b;border-radius:20px;overflow:hidden}.progressbar div{height:100%;background:#fb7185;width:0}
+input[type=number]{width:100%;background:#0f172a;border:1px solid #334155;color:#fff;border-radius:10px;padding:12px;font-size:16px;margin:5px 0 10px}
+.save{background:#e11d48;width:100%;font-size:15px}.small{font-size:12px;color:#94a3b8;line-height:1.45}
+.nav{display:flex;gap:8px}.nav button{flex:1}.hidden{display:none}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top"><div><h1>🕷️ Spider Coach</h1><div class="sub">12 settimane · casa · 4 giorni</div></div><span class="badge" id="weekBadge"></span></div>
+  <div class="card hero">
+    <div class="date" id="today"></div><div class="big" id="dayTitle"></div>
+    <div style="margin-top:12px"><div class="small">Completamento di oggi</div><div class="progressbar"><div id="bar"></div></div></div>
+  </div>
+  <div class="tabs"><button class="active" onclick="showTab('oggi',this)">OGGI</button><button onclick="showTab('progressi',this)">PROGRESSI</button></div>
+  <section id="oggi">
+    <div class="card"><h2>🍽️ Menu di oggi</h2><div id="menu"></div></div>
+    <div class="card"><h2>🏋️ Allenamento</h2><div id="workout"></div></div>
+    <div class="card"><h2>🚴 Attività</h2><div class="row"><input type="checkbox" id="bike"><label for="bike">Bici quotidiana completata</label></div><div class="small">I tuoi circa 14 km giornalieri restano la base del cardio. Non serve aggiungere cardio extra ogni giorno.</div></div>
+  </section>
+  <section id="progressi" class="hidden">
+    <div class="card"><h2>📈 I miei progressi</h2><label class="small">Peso (kg)</label><input id="weight" type="number" step="0.1" placeholder="72"><label class="small">Vita (cm)</label><input id="waist" type="number" step="0.5" placeholder="es. 90"><label class="small">Push-up massimi</label><input id="pushups" type="number" placeholder="10"><button class="save" onclick="saveProgress()">Salva dati di oggi</button><div id="history" style="margin-top:14px"></div></div>
+    <div class="card"><h2>🎯 Obiettivi</h2><p class="small">Partenza: 72 kg · 1,65 m · 31 anni · circa 10 push-up.</p><p class="small">Priorità: diventare più forte, migliorare la composizione corporea e mantenere energia per lavoro e bici. Non inseguire cali di peso rapidi.</p></div>
+  </section>
+  <div class="nav"><button onclick="prevDay()">← Giorno prima</button><button onclick="nextDay()">Giorno dopo →</button></div>
+  <p class="small" style="margin-top:16px">Il programma parte dal primo giorno che apri l'app. I dati vengono salvati sul dispositivo tramite memoria locale.</p>
+</div>
+<script>
+const menus = {
+training:[
+["Colazione","Yogurt greco 250 g + avena 50 g + banana","~450 kcal"],
+["Spuntino","1 frutto + 20 g frutta secca","~200 kcal"],
+["Pranzo","Pasta 80 g + pollo 150 g + verdure + 10 g olio EVO","~650 kcal"],
+["Spuntino pre/post","Yogurt greco 150–170 g + 1 frutto","~180 kcal"],
+["Cena","Pesce 180 g + patate 250 g + verdure + 10 g olio EVO","~550 kcal"]
+],
+rest:[
+["Colazione","2 uova + pane 70 g + 1 frutto","~400 kcal"],
+["Spuntino","Yogurt greco 170–200 g","~130 kcal"],
+["Pranzo","Riso 75 g + tacchino 160 g + verdure + 10 g olio EVO","~620 kcal"],
+["Spuntino","1 frutto + 15–20 g frutta secca","~180 kcal"],
+["Cena","Legumi 200 g sgocciolati + tonno al naturale 120 g + verdure + pane 50 g + 10 g olio EVO","~600 kcal"]
+]};
+
+const baseWorkouts = {
+1:{title:"Spinta + core",ex:[["Push-up","4 × 6–8"],["Push-up inclinati","3 × 10"],["Pike push-up","3 × 5–8"],["Push-up stretti","3 × 5–8"],["Superman","3 × 12"],["Plank","3 × 30–40 sec"]]},
+2:{title:"Gambe + esplosività",ex:[["Squat","4 × 15"],["Affondi indietro","3 × 8/gamba"],["Bulgarian split squat","3 × 6/gamba"],["Glute bridge","3 × 15"],["Calf raises","3 × 20"],["Squat jump","3 × 6"],["Wall sit","2 × 30–45 sec"]]},
+3:{title:"Schiena + core",ex:[["Superman","4 × 12"],["Reverse snow angel","3 × 10"],["Prone Y-T-W","3 × 6 per posizione"],["Bird dog","3 × 10/lato"],["Dead bug","3 × 10/lato"],["Leg raises","3 × 8"],["Plank","3 × 30–45 sec"]]},
+4:{title:"Full body",ex:[["Circuito × 3 giri","8 push-up · 15 squat · 8 affondi/gamba · 6 pike push-up · 15 glute bridge · 20 mountain climber · 6 burpees · 30 sec plank"],["Recupero","2 minuti tra i giri"]]}
+};
+
+const phase = [
+{w:1,mult:0,desc:"Base tecnica: lascia 1–2 ripetizioni di margine."},
+{w:2,mult:0,desc:"Ripeti il carico della settimana 1 cercando 1 ripetizione in più quando possibile."},
+{w:3,mult:1,desc:"Aumenta leggermente le ripetizioni negli esercizi principali."},
+{w:4,mult:1,desc:"Settimana di consolidamento; esecuzione pulita."},
+{w:5,mult:2,desc:"Passa a varianti più difficili dove possibile."},
+{w:6,mult:2,desc:"Aumenta di 1–2 ripetizioni per serie se la tecnica resta buona."},
+{w:7,mult:3,desc:"Progressione: più volume, senza arrivare sempre al cedimento."},
+{w:8,mult:3,desc:"Consolidamento e controllo del movimento."},
+{w:9,mult:4,desc:"Fase atletica: varianti più impegnative."},
+{w:10,mult:4,desc:"Aumenta volume o difficoltà, non entrambi insieme."},
+{w:11,mult:5,desc:"Settimana intensa ma controllata."},
+{w:12,mult:5,desc:"Settimana finale: tecnica, forza e test di progresso."}];
+
+let state=JSON.parse(localStorage.getItem("spiderState")||'{"start":null,"offset":0,"checks":{},"progress":[]}');
+if(!state.start){state.start=new Date().toISOString().slice(0,10);localStorage.setItem("spiderState",JSON.stringify(state));}
+let selectedOffset=state.offset||0;
+function dateAtOffset(n){let d=new Date(state.start+"T12:00:00");d.setDate(d.getDate()+n);return d}
+function dayIndex(){return ((new Date(state.start+"T12:00:00").getDay()+6)%7)}
+function render(){
+ let d=dateAtOffset(selectedOffset), dow=(d.getDay()+6)%7, day=dow+1, week=Math.min(12,Math.floor(Math.max(0,selectedOffset)/7)+1), p=phase[week-1];
+ document.getElementById("today").textContent=d.toLocaleDateString("it-IT",{weekday:"long",day:"numeric",month:"long"});
+ document.getElementById("weekBadge").textContent="SETTIMANA "+week;
+ let title=["Lunedì","Martedì","Mercoledì","Giovedì","Venerdì","Sabato","Domenica"][dow];
+ document.getElementById("dayTitle").textContent=title;
+ let isTraining=[0,1,3,5].includes(dow);
+ let meal=menus[isTraining?"training":"rest"];
+ document.getElementById("menu").innerHTML=meal.map((x,i)=>`<div class="meal"><div><b>${x[0]}</b><br><span class="muted">${x[1]}</span></div><div class="qty">${x[2]}</div></div>`).join("");
+ if(isTraining){
+   let type=dow===0?1:dow===1?2:dow===3?3:4;
+   let w=JSON.parse(JSON.stringify(baseWorkouts[type]));
+   if(week>=5 && type===1) w.ex[0][1]="4 × 8–10";
+   if(week>=9 && type===1) w.ex[0][1]="4 × 10–12";
+   if(week>=5 && type===2) w.ex[0][1]="4 × 18";
+   if(week>=9 && type===2) w.ex[0][1]="4 × 20";
+   if(week>=5 && type===4) w.ex[0][1]="Circuito × 4 giri";
+   document.getElementById("workout").innerHTML=`<div class="small" style="margin-bottom:8px">${p.desc}</div>`+w.ex.map((x,i)=>`<div class="exercise"><div class="row"><input type="checkbox" data-key="${selectedOffset}-${i}" ${state.checks[selectedOffset+"-"+i]?"checked":""}><div><b>${x[0]}</b><br><span class="muted">${x[1]}</span></div></div></div>`).join("");
+ }else{
+   document.getElementById("workout").innerHTML=`<p class="muted">Recupero. Camminata leggera e mobilità 10 minuti se ne hai voglia.</p>`;
+ }
+ document.querySelectorAll('input[type=checkbox][data-key]').forEach(c=>c.addEventListener('change',e=>{state.checks[e.target.dataset.key]=e.target.checked;save();renderProgress();}));
+ let bike=document.getElementById("bike"); bike.checked=!!state.checks["bike-"+selectedOffset]; bike.onchange=()=>{state.checks["bike-"+selectedOffset]=bike.checked;save();renderProgress()};
+ renderProgress();
+}
+function renderProgress(){let total=document.querySelectorAll('input[type=checkbox][data-key]').length+1, done=document.querySelectorAll('input[type=checkbox][data-key]:checked').length+(state.checks["bike-"+selectedOffset]?1:0); document.getElementById("bar").style.width=(total?Math.round(done/total*100):0)+"%";}
+function save(){localStorage.setItem("spiderState",JSON.stringify(state));}
+function prevDay(){selectedOffset--;state.offset=selectedOffset;save();render()}
+function nextDay(){selectedOffset++;state.offset=selectedOffset;save();render()}
+function showTab(t,b){document.getElementById("oggi").classList.toggle("hidden",t!=="oggi");document.getElementById("progressi").classList.toggle("hidden",t!=="progressi");document.querySelectorAll(".tabs button").forEach(x=>x.classList.remove("active"));b.classList.add("active");if(t==="progressi")renderHistory();}
+function saveProgress(){let x={date:new Date().toLocaleDateString("it-IT"),weight:document.getElementById("weight").value,waist:document.getElementById("waist").value,pushups:document.getElementById("pushups").value};if(!x.weight&&!x.waist&&!x.pushups)return;state.progress.push(x);save();renderHistory();document.getElementById("weight").value="";document.getElementById("waist").value="";document.getElementById("pushups").value="";}
+function renderHistory(){document.getElementById("history").innerHTML=state.progress.slice().reverse().map(x=>`<div class="exercise"><b>${x.date}</b><br><span class="muted">${x.weight?x.weight+" kg":""} ${x.waist?" · "+x.waist+" cm vita":""} ${x.pushups?" · "+x.pushups+" push-up":""}</span></div>`).join("")||'<div class="small">Ancora nessuna registrazione.</div>';}
+render();
+</script>
+</body></html>
